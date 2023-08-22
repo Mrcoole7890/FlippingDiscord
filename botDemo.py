@@ -61,3 +61,5 @@ def connectToPointsSystemDatabase():
 
 
 bot.run(os.getenv("discordBotToken"))
+
+#comment added for testing

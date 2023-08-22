@@ -1,0 +1,5 @@
+"C:\Users\mrcoo\AppData\Local\Programs\Python\Python311\python.exe" "C:\Users\mrcoo\OneDrive\Desktop\Harrison Demo\keepa_spider\brickseek_kolhs_selenium.py"
+"C:\Users\mrcoo\AppData\Local\Programs\Python\Python311\python.exe" "C:\Users\mrcoo\OneDrive\Desktop\Harrison Demo\keepa_spider\brickseek_lows_selenium.py"
+"C:\Users\mrcoo\AppData\Local\Programs\Python\Python311\python.exe" "C:\Users\mrcoo\OneDrive\Desktop\Harrison Demo\keepa_spider\keepa_selenium_lightning.py"
+"C:\Users\mrcoo\AppData\Local\Programs\Python\Python311\python.exe" "C:\Users\mrcoo\OneDrive\Desktop\Harrison Demo\keepa_spider\keepa_selenium_warehouse.py"
+"C:\Users\mrcoo\AppData\Local\Programs\Python\Python311\python.exe" "C:\Users\mrcoo\OneDrive\Desktop\Harrison Demo\keepa_spider\keepa_selenium.py"

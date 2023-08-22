@@ -21,7 +21,8 @@ async def greaseTest(ctx, arg):
 
 @bot.command()
 async def bal(ctx, arg):
-    await ctx.send("User attempted to get the balance of the user {}. Cole should probs implement that feature lul.".format(arg))
+    await ctx.send("User attempted to get the balance of the user {}.".format(arg))
+    await ctx.send("User {} has a balance of {}".format(arg, getUserBalance(arg[2:-1])[0]))
 
 @bot.event
 async def on_message(message):
@@ -61,5 +62,3 @@ def connectToPointsSystemDatabase():
 
 
 bot.run(os.getenv("discordBotToken"))
-
-#comment added for testing 2

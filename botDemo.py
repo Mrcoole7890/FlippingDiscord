@@ -22,6 +22,8 @@ async def greaseTest(ctx, arg):
 @bot.command()
 async def bal(ctx, arg):
     await ctx.send("User attempted to get the balance of the user {}.".format(arg))
+    if getUserBalance(arg[2:-1]) == -1:
+        await ctx.send("User {} is not registered to the database".format(arg))
     await ctx.send("User {} has a balance of {}".format(arg, getUserBalance(arg[2:-1])[0]))
 
 @bot.event
@@ -43,6 +45,8 @@ def getUserBalance(id):
     query = "SELECT balance FROM users WHERE userId = {};".format(id)
     cursor.execute(query)
     finalValue = cursor.fetchone()
+    if not finalValue:
+        return -1
     return finalValue
     ctx.close()
 

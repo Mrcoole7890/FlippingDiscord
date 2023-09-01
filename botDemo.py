@@ -38,7 +38,12 @@ async def on_message(message):
 
     await message.channel.send("User {} has a balance of {}".format(message.author.mention, getUserBalance(message.author.id)[0]))
   if len(message.attachments) != 0:
-    await message.channel.send("User {} added an attatchment!".format(message.author.mention))
+    if message.attachments[0].content_type == "image/png":
+        await message.channel.send("User {} added a png!".format(message.author.mention))
+    elif message.attachments[0].content_type == "image/jpeg":
+        await message.channel.send("User {} added a jpeg!".format(message.author.mention))
+    else:
+        await message.channel.send("User {} added an attatchment!".format(message.author.mention))
 
   await bot.process_commands(message)
 

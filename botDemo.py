@@ -35,8 +35,11 @@ async def on_message(message):
   if msg.lstrip() == "$bal":
     if getUserBalance(message.author.id) is None:
         addNewUser(message.author.id)
-    
+
     await message.channel.send("User {} has a balance of {}".format(message.author.mention, getUserBalance(message.author.id)[0]))
+  if len(message.attachments) != 0:
+    await message.channel.send("User {} added an attatchment!".format(message.author.mention))
+
   await bot.process_commands(message)
 
 def getUserBalance(id):

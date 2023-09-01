@@ -33,14 +33,15 @@ async def on_message(message):
     return
   msg = message.content
   if msg.lstrip() == "$bal":
-    if getUserBalance(message.author.id) is None:
+    if getUserBalance(message.author.id) == -1:
         addNewUser(message.author.id)
-
     await message.channel.send("User {} has a balance of {}".format(message.author.mention, getUserBalance(message.author.id)[0]))
   if len(message.attachments) != 0:
     if message.attachments[0].content_type == "image/png":
+        addPointsToUser(message.author.id, 3)
         await message.channel.send("User {} added a png! Three points were added to their account".format(message.author.mention))
     elif message.attachments[0].content_type == "image/jpeg":
+        addPointsToUser(message.author.id, 3)
         await message.channel.send("User {} added a jpeg! Three points were added to their account".format(message.author.mention))
     else:
         await message.channel.send("User {} added an attatchment!".format(message.author.mention))
@@ -65,6 +66,15 @@ def addNewUser(id):
     finalValue = cursor.execute(query)
     ctx.commit()
     ctx.close()
+
+def addPointsToUser(id, ammount):
+        currBalance = getUserBalance(id)[0]
+        ctx = connectToPointsSystemDatabase()
+        cursor = ctx.cursor()
+        query = "UPDATE users SET balance = {} WHERE userId = '{}';".format(currBalance + ammount, id)
+        finalValue = cursor.execute(query)
+        ctx.commit()
+        ctx.close()
 
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),

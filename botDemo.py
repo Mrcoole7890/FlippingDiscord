@@ -39,10 +39,10 @@ async def on_message(message):
   if len(message.attachments) != 0:
     if message.attachments[0].content_type == "image/png":
         addPointsToUser(message.author.id, 3)
-        await message.channel.send("User {} added a png! Three points were added to their account".format(message.author.mention))
+        await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
     elif message.attachments[0].content_type == "image/jpeg":
         addPointsToUser(message.author.id, 3)
-        await message.channel.send("User {} added a jpeg! Three points were added to their account".format(message.author.mention))
+        await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
     else:
         await message.channel.send("User {} added an attatchment!".format(message.author.mention))
 
@@ -81,6 +81,9 @@ def connectToPointsSystemDatabase():
                               host=os.getenv("pointsDatabaseHost"),
                               database=os.getenv("pointsDatabaseName"))
 
+def createDealSuccessImageEmbed(message, pointCount):
+    embed=discord.Embed(title=":white_check_mark: Success!", description="{} earned **{} point(s)!** Total {} points! 🥳".format(message.author.mention, pointCount, getUserBalance(message.author.id)[0]), color=0xFF5733)
+    return embed
 
 
 bot.run(os.getenv("discordBotToken"))

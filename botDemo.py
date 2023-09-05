@@ -22,7 +22,7 @@ async def greaseTest(ctx, arg):
 @bot.command()
 async def bal(ctx, arg):
     if getUserBalance(arg[2:-1]) == -1:
-        await ctx.send("User {} is not registered to the database".format(arg))
+        await ctx.send(embed=createUserRetrivalError(arg))
     await ctx.send(embed=createUserBalanceRetrival(arg, getUserBalance(arg[2:-1])[0]))
 
 @bot.event
@@ -84,6 +84,10 @@ def createDealSuccessImageEmbed(message, pointCount):
 
 def createUserBalanceRetrival(userToGet, points):
     embed=discord.Embed(title="Points!", description="{} has **{} point(s)!**".format(userToGet, points), color=0xFF5733)
+    return embed
+
+def createUserRetrivalError(userToGet):
+    embed=discord.Embed(title="❌ Error", description="{} is not registered in the database.".format(userToGet), color=0xFF5733)
     return embed
 
 bot.run(os.getenv("discordBotToken"))

@@ -21,10 +21,9 @@ async def greaseTest(ctx, arg):
 
 @bot.command()
 async def bal(ctx, arg):
-    await ctx.send("User attempted to get the balance of the user {}.".format(arg))
     if getUserBalance(arg[2:-1]) == -1:
         await ctx.send("User {} is not registered to the database".format(arg))
-    await ctx.send("User {} has a balance of {}".format(arg, getUserBalance(arg[2:-1])[0]))
+    await ctx.send(embed=createUserBalanceRetrival(arg, getUserBalance(arg[2:-1])[0]))
 
 @bot.event
 async def on_message(message):
@@ -35,7 +34,7 @@ async def on_message(message):
   if msg.lstrip() == "$bal":
     if getUserBalance(message.author.id) == -1:
         addNewUser(message.author.id)
-    await message.channel.send("User {} has a balance of {}".format(message.author.mention, getUserBalance(message.author.id)[0]))
+    await message.channel.send(embed=createUserBalanceRetrival(message.author.mention, getUserBalance(message.author.id)[0]))
   if len(message.attachments) != 0:
     if message.attachments[0].content_type == "image/png":
         addPointsToUser(message.author.id, 3)
@@ -43,8 +42,6 @@ async def on_message(message):
     elif message.attachments[0].content_type == "image/jpeg":
         addPointsToUser(message.author.id, 3)
         await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
-    else:
-        await message.channel.send("User {} added an attatchment!".format(message.author.mention))
 
   await bot.process_commands(message)
 
@@ -85,5 +82,8 @@ def createDealSuccessImageEmbed(message, pointCount):
     embed=discord.Embed(title=":white_check_mark: Success!", description="{} earned **{} point(s)!** Total {} points! 🥳".format(message.author.mention, pointCount, getUserBalance(message.author.id)[0]), color=0xFF5733)
     return embed
 
+def createUserBalanceRetrival(userToGet, points):
+    embed=discord.Embed(title="Points!", description="{} has **{} point(s)!**".format(userToGet, points), color=0xFF5733)
+    return embed
 
 bot.run(os.getenv("discordBotToken"))

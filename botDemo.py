@@ -36,12 +36,20 @@ async def on_message(message):
         addNewUser(message.author.id)
     await message.channel.send(embed=createUserBalanceRetrival(message.author.mention, getUserBalance(message.author.id)[0]))
   if len(message.attachments) != 0:
-    if message.attachments[0].content_type == "image/png":
-        addPointsToUser(message.author.id, 3)
-        await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
-    elif message.attachments[0].content_type == "image/jpeg":
-        addPointsToUser(message.author.id, 3)
-        await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
+    if str(message.channel.id) == os.getenv("successHaulChID"):
+        if message.attachments[0].content_type == "image/png":
+            addPointsToUser(message.author.id, 3)
+            await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
+        elif message.attachments[0].content_type == "image/jpeg":
+            addPointsToUser(message.author.id, 3)
+            await message.channel.send(embed=createDealSuccessImageEmbed(message, 3))
+    if str(message.channel.id) == os.getenv("successChID") or str(message.channel.id) == os.getenv("exSuccessChID"):
+        if message.attachments[0].content_type == "image/png":
+            addPointsToUser(message.author.id, 3)
+            await message.channel.send(embed=createDealSuccessImageEmbed(message, 1))
+        elif message.attachments[0].content_type == "image/jpeg":   
+            addPointsToUser(message.author.id, 3)
+            await message.channel.send(embed=createDealSuccessImageEmbed(message, 1))
 
   await bot.process_commands(message)
 

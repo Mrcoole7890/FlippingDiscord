@@ -25,6 +25,22 @@ async def bal(ctx, arg):
         await ctx.send(embed=createUserRetrivalError(arg))
     await ctx.send(embed=createUserBalanceRetrival(arg, getUserBalance(arg[2:-1])[0]))
 
+@bot.command(pass_context=True)
+@commands.has_role("Admin")
+async def give(ctx,user:discord.Member, points):
+    if (int(points) > 0):
+        addPointsToUser(user.id, int(points))
+        await ctx.send(embed=createUserGivePoints(user.mention, points, getUserBalance(user.id)))
+
+@bot.command(pass_context=True)
+@commands.has_role("Admin")
+async def take(ctx,user:discord.Member, points):
+    if (int(points) > 0):
+        if (removePointsFromUser(user.id, int(points))):
+            await ctx.send(embed=createUserTakePoints(user.mention, points, getUserBalance(user.id)))
+        else:
+            await ctx.send(embed=attemptToRemoveMoreThanBalError(user.mention, points, getUserBalance(user.id)))
+
 @bot.event
 async def on_message(message):
   #check who sent the message
@@ -81,6 +97,18 @@ def addPointsToUser(id, ammount):
         ctx.commit()
         ctx.close()
 
+def removePointsFromUser(id, ammount):
+        currBalance = getUserBalance(id)[0]
+        if (currBalance < ammount): 
+            return False
+        ctx = connectToPointsSystemDatabase()
+        cursor = ctx.cursor()
+        query = "UPDATE users SET balance = {} WHERE userId = '{}';".format(currBalance - ammount, id)
+        finalValue = cursor.execute(query)
+        ctx.commit()
+        ctx.close()
+        return True
+
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),
                               host=os.getenv("pointsDatabaseHost"),
@@ -97,5 +125,19 @@ def createUserBalanceRetrival(userToGet, points):
 def createUserRetrivalError(userToGet):
     embed=discord.Embed(title="❌ Error", description="{} is not registered in the database.".format(userToGet), color=0xFF5733)
     return embed
+
+def createUserGivePoints(userToGet, numPoints, newPointsTotal):
+    embed=discord.Embed(title=":white_check_mark: Success!", description="Successfully gave **{} points** to {}, who now has **{}**.".format(numPoints, userToGet, newPointsTotal[0]), color=0xFF5733)
+    return embed
+
+def createUserTakePoints(userToLose, numPoints, newPointsTotal):
+    embed=discord.Embed(title="❌ Removed Points!", description="Successfully removed **{} points** to {}, who now has **{}**.".format(numPoints, userToLose, newPointsTotal[0]), color=0xFF5733)
+    return embed
+
+def attemptToRemoveMoreThanBalError(userToLose, ammountAttempted, currBalance):
+    embed=discord.Embed(title="❌ Error", description="Attempted to remove **{} points**; however, {} has **{} points**.".format(ammountAttempted, userToLose, currBalance[0]), color=0xFF5733)
+    return embed
+
+
 
 bot.run(os.getenv("discordBotToken"))

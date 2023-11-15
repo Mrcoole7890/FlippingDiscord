@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 from discord.ext import commands
 import mysql.connector
 
-
 load_dotenv()
 
 intents = discord.Intents.all()
@@ -72,8 +71,7 @@ async def on_message(message):
 def getUserBalance(id):
     ctx = connectToPointsSystemDatabase()
     cursor = ctx.cursor()
-    query = "SELECT balance FROM users WHERE userId = {};".format(id)
-    cursor.execute(query)
+    cursor.execute("SELECT balance FROM users WHERE userId = %s;", [id])
     finalValue = cursor.fetchone()
     if not finalValue:
         return -1
@@ -83,31 +81,31 @@ def getUserBalance(id):
 def addNewUser(id):
     ctx = connectToPointsSystemDatabase()
     cursor = ctx.cursor()
-    query = "INSERT INTO users (userId, balance) VALUES ({}, 0);".format(id)
-    finalValue = cursor.execute(query)
+    finalValue = cursor.execute("INSERT INTO users (userId, balance) VALUES (%s, 0);", [id])
     ctx.commit()
     ctx.close()
 
 def addPointsToUser(id, ammount):
-        currBalance = getUserBalance(id)[0]
-        ctx = connectToPointsSystemDatabase()
-        cursor = ctx.cursor()
-        query = "UPDATE users SET balance = {} WHERE userId = '{}';".format(currBalance + ammount, id)
-        finalValue = cursor.execute(query)
-        ctx.commit()
-        ctx.close()
+    return changePoints(True, id, ammount)
 
 def removePointsFromUser(id, ammount):
-        currBalance = getUserBalance(id)[0]
+    return changePoints(False, id, ammount)
+
+def changePoints(add, id, ammount):
+    currBalance = getUserBalance(id)[0]
+    ctx = connectToPointsSystemDatabase()
+    cursor = ctx.cursor()
+    ammountToApply = int()
+    if (add):
+        ammountToApply = ammount
+    else:
         if (currBalance < ammount): 
             return False
-        ctx = connectToPointsSystemDatabase()
-        cursor = ctx.cursor()
-        query = "UPDATE users SET balance = {} WHERE userId = '{}';".format(currBalance - ammount, id)
-        finalValue = cursor.execute(query)
-        ctx.commit()
-        ctx.close()
-        return True
+        ammountToApply = -ammount
+    finalValue = cursor.execute("UPDATE users SET balance = %s WHERE userId = %s;", [currBalance + ammountToApply, id])
+    ctx.commit()
+    ctx.close()
+    return True
 
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),
@@ -137,7 +135,5 @@ def createUserTakePoints(userToLose, numPoints, newPointsTotal):
 def attemptToRemoveMoreThanBalError(userToLose, ammountAttempted, currBalance):
     embed=discord.Embed(title="❌ Error", description="Attempted to remove **{} points**; however, {} has **{} points**.".format(ammountAttempted, userToLose, currBalance[0]), color=0xFF5733)
     return embed
-
-
 
 bot.run(os.getenv("discordBotToken"))

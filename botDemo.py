@@ -65,6 +65,9 @@ async def on_message(message):
         elif message.attachments[0].content_type == "image/jpeg":   
             addPointsToUser(message.author.id, 1)
             await message.channel.send(embed=createDealSuccessImageEmbed(message, 1))
+  if str(message.channel.id) == os.getenv("testingChID"):
+    if msg.lstrip() == "$store":
+            await message.channel.send(embed=createUserAttemptedCommand(message.author, "store"))
 
   await bot.process_commands(message)
 
@@ -134,6 +137,10 @@ def createUserTakePoints(userToLose, numPoints, newPointsTotal):
 
 def attemptToRemoveMoreThanBalError(userToLose, ammountAttempted, currBalance):
     embed=discord.Embed(title="❌ Error", description="Attempted to remove **{} points**; however, {} has **{} points**.".format(ammountAttempted, userToLose, currBalance[0]), color=0xFF5733)
+    return embed
+
+def createUserAttemptedCommand(userToGet, commandName):
+    embed=discord.Embed(title=":bangbang: Alert!", description="User {} attempted to call the {} command.".format(userToGet, commandName), color=0xFF5733)
     return embed
 
 bot.run(os.getenv("discordBotToken"))

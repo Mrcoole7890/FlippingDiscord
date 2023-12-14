@@ -68,6 +68,8 @@ async def on_message(message):
   if str(message.channel.id) == os.getenv("testingChID"):
     if msg.lstrip() == "$store":
             await message.channel.send(embed=createUserAttemptedCommand(message.author, "store"))
+            print(str(getStoreItems()))
+            await message.channel.send(embed=createStoreEmbed())
 
   await bot.process_commands(message)
 
@@ -110,6 +112,15 @@ def changePoints(add, id, ammount):
     ctx.close()
     return True
 
+def getStoreItems():
+    ctx = connectToPointsSystemDatabase()
+    cursor = ctx.cursor()
+    finalResult = list()
+    cursor.execute("SELECT * FROM listedrewards;")
+    for row in cursor.fetchall():
+        finalResult.append(row)
+    return finalResult
+
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),
                               host=os.getenv("pointsDatabaseHost"),
@@ -141,6 +152,13 @@ def attemptToRemoveMoreThanBalError(userToLose, ammountAttempted, currBalance):
 
 def createUserAttemptedCommand(userToGet, commandName):
     embed=discord.Embed(title=":bangbang: Alert!", description="User {} attempted to call the {} command.".format(userToGet, commandName), color=0xFF5733)
+    return embed
+
+def createStoreEmbed():
+    embed=discord.Embed(title=":coin: Store Listing", color=0xFF5733)
+    storeItems = getStoreItems()
+    for item in storeItems:
+        embed.add_field(name=f'**{item[1]}**', value=f'> Price: {item[3]}\n> description: {item[3]}',inline=False)
     return embed
 
 bot.run(os.getenv("discordBotToken"))

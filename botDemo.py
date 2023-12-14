@@ -32,6 +32,10 @@ async def give(ctx,user:discord.Member, points):
         await ctx.send(embed=createUserGivePoints(user.mention, points, getUserBalance(user.id)))
 
 @bot.command(pass_context=True)
+async def buy(ctx, itemname):
+    userAttemptToBuy(itemname, ctx.message.author.id)
+
+@bot.command(pass_context=True)
 @commands.has_role("Admin")
 async def take(ctx,user:discord.Member, points):
     if (int(points) > 0):
@@ -121,6 +125,20 @@ def getStoreItems():
         finalResult.append(row)
     return finalResult
 
+def userAttemptToBuy(itemname, userID):
+    ctx = connectToPointsSystemDatabase()
+    cursor = ctx.cursor()
+    cursor.execute("SELECT * FROM listedrewards WHERE item_name = %s;", [itemname])
+    itemTobuy = cursor.fetchone()
+    
+    if itemTobuy != None:
+        if removePointsFromUser(userID, itemTobuy[2]):
+            print("user successfully bought " + itemTobuy[1] + " and  now has a balance of " + str(getUserBalance(userID)[0]))
+        else:
+            print("user attempted to buy the item " + itemTobuy[1] + " but only has " + str(getUserBalance(userID)[0]) + " while the item they wish to purchase is " + str(itemTobuy[2]))
+    else:
+        print("the item \"" + itemname + "\" is not listed on the database.")
+
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),
                               host=os.getenv("pointsDatabaseHost"),
@@ -158,7 +176,7 @@ def createStoreEmbed():
     embed=discord.Embed(title=":coin: Store Listing", color=0xFF5733)
     storeItems = getStoreItems()
     for item in storeItems:
-        embed.add_field(name=f'**{item[1]}**', value=f'> Price: {item[3]}\n> description: {item[3]}',inline=False)
+        embed.add_field(name=f'**{item[1]}**', value=f'> Price: {item[2]}\n> description: {item[3]}',inline=False)
     return embed
 
 bot.run(os.getenv("discordBotToken"))

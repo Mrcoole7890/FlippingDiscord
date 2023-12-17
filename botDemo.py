@@ -29,11 +29,10 @@ async def bal(ctx, arg):
 async def give(ctx,user:discord.Member, points):
     if (int(points) > 0):
         addPointsToUser(user.id, int(points))
-        await ctx.send(embed=createUserGivePoints(user.mention, points, getUserBalance(user.id)))
 
 @bot.command(pass_context=True)
 async def buy(ctx, itemname):
-    userAttemptToBuy(itemname, ctx.message.author.id)
+    await ctx.send(embed=userAttemptToBuy(itemname, ctx.message.author))
 
 @bot.command(pass_context=True)
 @commands.has_role("Admin")
@@ -125,19 +124,19 @@ def getStoreItems():
         finalResult.append(row)
     return finalResult
 
-def userAttemptToBuy(itemname, userID):
+def userAttemptToBuy(itemname, userObj):
     ctx = connectToPointsSystemDatabase()
     cursor = ctx.cursor()
     cursor.execute("SELECT * FROM listedrewards WHERE item_name = %s;", [itemname])
     itemTobuy = cursor.fetchone()
     
     if itemTobuy != None:
-        if removePointsFromUser(userID, itemTobuy[2]):
-            print("user successfully bought " + itemTobuy[1] + " and  now has a balance of " + str(getUserBalance(userID)[0]))
+        if removePointsFromUser(userObj.id, itemTobuy[2]):
+            return createUserCompletedPurchaseAlert(userObj.mention,getUserBalance(userObj.id))
         else:
-            print("user attempted to buy the item " + itemTobuy[1] + " but only has " + str(getUserBalance(userID)[0]) + " while the item they wish to purchase is " + str(itemTobuy[2]))
+            return userCannotAffordRewardError(userObj.mention, itemTobuy[2], str(getUserBalance(userObj.id)[0]))
     else:
-        print("the item \"" + itemname + "\" is not listed on the database.")
+        return noSuchItemOnTheStoreError(userObj.mention, itemname)
 
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),
@@ -168,8 +167,20 @@ def attemptToRemoveMoreThanBalError(userToLose, ammountAttempted, currBalance):
     embed=discord.Embed(title="❌ Error", description="Attempted to remove **{} points**; however, {} has **{} points**.".format(ammountAttempted, userToLose, currBalance[0]), color=0xFF5733)
     return embed
 
+def userCannotAffordRewardError(userToLose, ammountAttempted, currBalance):
+    embed=discord.Embed(title="❌ Insufficient Funds", description="Attempted to buy a reward from the store worth **{} points**; however, {} has **{} points**.".format(ammountAttempted, userToLose, currBalance[0]), color=0xFF5733)
+    return embed
+
+def noSuchItemOnTheStoreError(userToLose, itemAttempted):
+    embed=discord.Embed(title="❌ Reward Not Found", description="Error the {} attempted to buy **{}**; however, this is not present on the store.".format(userToLose, itemAttempted), color=0xFF5733)
+    return embed
+
 def createUserAttemptedCommand(userToGet, commandName):
     embed=discord.Embed(title=":bangbang: Alert!", description="User {} attempted to call the {} command.".format(userToGet, commandName), color=0xFF5733)
+    return embed
+
+def createUserCompletedPurchaseAlert(userToGet, balanceAfterwards):
+    embed=discord.Embed(title=":dollar: Successful Purchase!", description="{} has successfully made a purchase and now has **{} points**.".format(userToGet, balanceAfterwards[0]), color=0xFF5733)
     return embed
 
 def createStoreEmbed():

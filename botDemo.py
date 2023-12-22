@@ -32,7 +32,12 @@ async def give(ctx,user:discord.Member, points):
 
 @bot.command(pass_context=True)
 async def buy(ctx, itemname):
-    await ctx.send(embed=userAttemptToBuy(itemname, ctx.message.author))
+    if str(ctx.message.channel.id) == os.getenv("pointsShopID"):
+        purchaseResult = await userAttemptToBuy(itemname, ctx.message.author)
+        if not purchaseResult[1] == None:
+            role = discord.utils.get(ctx.guild.roles, name=purchaseResult[1])
+            await ctx.message.author.add_roles(role)
+        await ctx.send(embed=purchaseResult[0])
 
 @bot.command(pass_context=True)
 @commands.has_role("Admin")
@@ -68,10 +73,8 @@ async def on_message(message):
         elif message.attachments[0].content_type == "image/jpeg":   
             addPointsToUser(message.author.id, 1)
             await message.channel.send(embed=createDealSuccessImageEmbed(message, 1))
-  if str(message.channel.id) == os.getenv("testingChID"):
+  if str(message.channel.id) == os.getenv("pointsShopID"):
     if msg.lstrip() == "$store":
-            await message.channel.send(embed=createUserAttemptedCommand(message.author, "store"))
-            print(str(getStoreItems()))
             await message.channel.send(embed=createStoreEmbed())
 
   await bot.process_commands(message)
@@ -124,19 +127,27 @@ def getStoreItems():
         finalResult.append(row)
     return finalResult
 
-def userAttemptToBuy(itemname, userObj):
+async def userAttemptToBuy(itemname, userObj):
     ctx = connectToPointsSystemDatabase()
     cursor = ctx.cursor()
     cursor.execute("SELECT * FROM listedrewards WHERE item_name = %s;", [itemname])
     itemTobuy = cursor.fetchone()
-    
+
     if itemTobuy != None:
-        if removePointsFromUser(userObj.id, itemTobuy[2]):
-            return createUserCompletedPurchaseAlert(userObj.mention,getUserBalance(userObj.id))
+        if not itemTobuy[4] == None and not isUserAlreadyInRole(userObj, itemTobuy[4]):
+            if removePointsFromUser(userObj.id, itemTobuy[2]):
+                return [createUserCompletedPurchaseAlert(userObj.mention,getUserBalance(userObj.id)), itemTobuy[4]]
+            else:
+                return [userCannotAffordRewardError(userObj.mention, itemTobuy[2], str(getUserBalance(userObj.id)[0])), None]
+        elif itemTobuy[4] == None:
+            if removePointsFromUser(userObj.id, itemTobuy[2]):
+                return [createUserCompletedPurchaseAlert(userObj.mention,getUserBalance(userObj.id)), None]
+            else:
+                return [userCannotAffordRewardError(userObj.mention, itemTobuy[2], str(getUserBalance(userObj.id)[0])), None]
         else:
-            return userCannotAffordRewardError(userObj.mention, itemTobuy[2], str(getUserBalance(userObj.id)[0]))
+            return [userAttemptedTwoBuyRoleOwned(userObj.mention, itemTobuy[1]), None]
     else:
-        return noSuchItemOnTheStoreError(userObj.mention, itemname)
+        return [noSuchItemOnTheStoreError(userObj.mention, itemname), None]
 
 def connectToPointsSystemDatabase():
     return mysql.connector.connect(user=os.getenv("pointsDatabaseUser"), password=os.getenv("pointsDatabasePassword"),
@@ -179,6 +190,10 @@ def createUserAttemptedCommand(userToGet, commandName):
     embed=discord.Embed(title=":bangbang: Alert!", description="User {} attempted to call the {} command.".format(userToGet, commandName), color=0xFF5733)
     return embed
 
+def userAttemptedTwoBuyRoleOwned(userToGet, rewardName):
+    embed=discord.Embed(title=":bangbang: Already Own This Role!", description="User {} attempted to purchase the role {}; however, they already have this role.".format(userToGet, rewardName), color=0xFF5733)
+    return embed
+
 def createUserCompletedPurchaseAlert(userToGet, balanceAfterwards):
     embed=discord.Embed(title=":dollar: Successful Purchase!", description="{} has successfully made a purchase and now has **{} points**.".format(userToGet, balanceAfterwards[0]), color=0xFF5733)
     return embed
@@ -187,7 +202,13 @@ def createStoreEmbed():
     embed=discord.Embed(title=":coin: Store Listing", color=0xFF5733)
     storeItems = getStoreItems()
     for item in storeItems:
-        embed.add_field(name=f'**{item[1]}**', value=f'> Price: {item[2]}\n> description: {item[3]}',inline=False)
+        embed.add_field(name=f'**{item[1]}** - *{item[2]} points*', value=f'{item[3]}',inline=False)
     return embed
+
+def isUserAlreadyInRole(user, roleName):
+    for role in user.roles:
+        if role.name == roleName:
+            return True
+    return False
 
 bot.run(os.getenv("discordBotToken"))

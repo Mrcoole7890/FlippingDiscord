@@ -138,12 +138,12 @@ async def userAttemptToBuy(itemname, userObj):
             if removePointsFromUser(userObj.id, itemTobuy[2]):
                 return [createUserCompletedPurchaseAlert(userObj.mention,getUserBalance(userObj.id)), itemTobuy[4]]
             else:
-                return [userCannotAffordRewardError(userObj.mention, itemTobuy[2], str(getUserBalance(userObj.id)[0])), None]
+                return [userCannotAffordRewardError(userObj.mention, itemTobuy[2], getUserBalance(userObj.id)), None]
         elif itemTobuy[4] == None:
             if removePointsFromUser(userObj.id, itemTobuy[2]):
                 return [createUserCompletedPurchaseAlert(userObj.mention,getUserBalance(userObj.id)), None]
             else:
-                return [userCannotAffordRewardError(userObj.mention, itemTobuy[2], str(getUserBalance(userObj.id)[0])), None]
+                return [userCannotAffordRewardError(userObj.mention, itemTobuy[2], getUserBalance(userObj.id)), None]
         else:
             return [userAttemptedTwoBuyRoleOwned(userObj.mention, itemTobuy[1]), None]
     else:
